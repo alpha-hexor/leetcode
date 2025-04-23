@@ -5,7 +5,7 @@ echo "[*]Setting up...."
 
 title_slug=$(echo $problem_link | cut -d / -f 5)
 
-raw_question=$(curl -s -X POST "https://leetcode.com/graphql/" \
+curl -s -X POST "https://leetcode.com/graphql/" \
     -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0" \
     -H "Content-Type: application/json" \
     -H "x-csrftoken: mpNhdKcqLtKNeACoVlEvbruIKG8oqMj6NmhNR3kqdYB2APZhRdHg3EOf5I1Yaheh" \
@@ -15,14 +15,15 @@ raw_question=$(curl -s -X POST "https://leetcode.com/graphql/" \
     -H "Origin: https://leetcode.com" \
     -H "Connection: keep-alive" \
     --referer "https://leetcode.com/problems/$title_slug" \
-    --data-raw '{"query":"query questionContent($titleSlug: String!) { question(titleSlug: $titleSlug) { content mysqlSchemas dataSchemas } }","variables":{"titleSlug":"'"$title_slug"'"},"operationName":"questionContent"}')
+    --data-raw '{"query":"query questionContent($titleSlug: String!) { question(titleSlug: $titleSlug) { content mysqlSchemas dataSchemas } }","variables":{"titleSlug":"'"$title_slug"'"},"operationName":"questionContent"}' > question.json
 
-question=$(echo $raw_question | jq '.data.question.content' | sed  -r 's/\\n+/\<br\>/g' | sed -r 's/(")</</g' | sed -r 's/>(")/>/g' | sed -r 's/\\r+//g')
+#clean_question=$(echo $raw_question | tr -d "[:cntrl:]")
+#echo $raw_question | python3 -m json.tool
+question=$(jq '.data.question.content' question.json | sed  -r 's/\\n+/\<br\>/g' | sed -r 's/(")</</g' | sed -r 's/>(")/>/g' | sed -r 's/\\r+//g')
 
-mkdir $title_slug
+mkdir -p $title_slug
 
 echo "# Title: $title_slug" > $title_slug/readme.md
 echo "## Question" >> $title_slug/readme.md
 echo "$question">> $title_slug/readme.md
-
-
+rm question.json
